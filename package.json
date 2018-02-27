@@ -1,0 +1,57 @@
+{
+  "name": "@liximomo/react-virtual-scroller",
+  "version": "0.0.1-alpha.1",
+  "main": "dist/react-virtual-scroller.cjs.js",
+  "module": "dist/react-virtual-scroller.esm.js",
+  "browser": "dist/react-virtual-scroller.umd.js",
+  "author": "liximomo <liximomo@gmail.com> (https://liximomo.github.io/)",
+  "license": "MIT",
+  "files": [
+    "dist/"
+  ],
+  "scripts": {
+    "start": "npm-run-all --parallel watch:*",
+    "watch:js": "NODE_ENV=development rollup -c -w",
+    "watch:css": "postcss src/css/style.css -o dist/style.css -m -w",
+    "prebuild": "npm run lint",
+    "build": "npm run build:js && npm run build:css",
+    "build:js": "NODE_ENV=production rollup -c",
+    "build:css": "postcss src/css/style.css -o dist/style.css --no-map",
+    "postbuild": "npm run compress",
+    "compress": "npm run compress:css",
+    "compress:css": "postcss dist/style.css -u cssnano -o dist/style.min.css --no-map",
+    "lint": "eslint src/**/*.js"
+  },
+  "devDependencies": {
+    "babel-core": "^6.26.0",
+    "babel-eslint": "^8.1.2",
+    "babel-plugin-external-helpers": "^6.22.0",
+    "babel-plugin-syntax-dynamic-import": "^6.18.0",
+    "babel-plugin-transform-class-properties": "^6.24.1",
+    "babel-plugin-transform-es2015-destructuring": "^6.23.0",
+    "babel-plugin-transform-object-rest-spread": "^6.26.0",
+    "babel-plugin-transform-react-jsx": "^6.24.1",
+    "babel-plugin-transform-regenerator": "^6.26.0",
+    "babel-plugin-transform-runtime": "^6.23.0",
+    "babel-preset-env": "^1.6.1",
+    "cssnano": "^3.10.0",
+    "eslint": "^4.14.0",
+    "npm-run-all": "^4.1.2",
+    "postcss-cli": "^4.1.1",
+    "postcss-cssnext": "^3.0.2",
+    "postcss-url": "^7.3.0",
+    "rollup": "^0.53.0",
+    "rollup-plugin-babel": "^3.0.3",
+    "rollup-plugin-commonjs": "^8.2.6",
+    "rollup-plugin-node-resolve": "^3.0.0",
+    "rollup-plugin-replace": "^2.0.0",
+    "rollup-plugin-uglify": "^2.0.1"
+  },
+  "dependencies": {
+    "prop-types": "^15.6.1"
+  },
+  "peerDependencies": {
+    "react": "^16.2.0",
+    "react-dom": "^16.2.0"
+  }
+}

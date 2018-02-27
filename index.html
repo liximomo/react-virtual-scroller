@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>preview</title>
+    <link rel="stylesheet" href="./dist/style.css">
+  </head>
+  <body>
+    <div id="app"></div>
+    <script src="https://unpkg.com/babel-standalone@6.26.0/babel.min.js"></script>
+    <script type="text/javascript" src="https://unpkg.com/react@16.2.0/umd/react.development.js"></script>
+    <script type="text/javascript" src="https://unpkg.com/react-dom@16.2.0/umd/react-dom.development.js"></script>
+    <script src="./dist/react-virtual-scroller.umd.js"></script>
+    <script type="text/babel">
+      class App extends React.Component {
+        state = {
+          datas: new Array(100).fill(1).map((_, index) => ({
+            id: index,
+            height: Math.random() * 200 + 50,
+          }))
+        };
+
+        renderItem = ({ item, key, setRef }) => (
+          <div key={key} ref={setRef} style={{ height: item.height }}>
+            {item.id}
+          </div>
+        );
+
+        render() {
+          return (
+            <VirtualScroller
+              cssClass="list"
+              items={this.state.datas}
+              renderItem={this.renderItem}
+              bufferItemCount={3}
+              averageHeight={150}
+            />
+          )
+        }
+      }
+
+      ReactDOM.render(
+        <App />,
+        document.getElementById('app')
+      );
+    </script>
+  </body>
+</html>
