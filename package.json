@@ -1,6 +1,6 @@
 {
   "name": "@liximomo/react-virtual-scroller",
-  "version": "0.0.1-alpha.1",
+  "version": "0.0.1",
   "main": "dist/react-virtual-scroller.cjs.js",
   "module": "dist/react-virtual-scroller.esm.js",
   "browser": "dist/react-virtual-scroller.umd.js",
