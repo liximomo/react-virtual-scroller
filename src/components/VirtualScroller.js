@@ -31,10 +31,13 @@ class VirtualScroller extends React.PureComponent {
     this.scrollTop = 0;
     this.cachedContainerMetric = {};
     this.itemsHeightById = {};
-    this.itemsRefById = {};
 
     this.setRef = this.setRef.bind(this);
     this.handleScroll = this.handleScroll.bind(this);
+    this.handleResize = this.handleResize.bind(this);
+
+    // anchor to keep scroll position stable
+    this.anchor = null;
   }
 
   getItemHeight(item) {
@@ -48,20 +51,17 @@ class VirtualScroller extends React.PureComponent {
     return item[this.props.keySelector];
   }
 
-  calcItemHeight(item) {
+  updateItemHeight(item, $element) {
     const id = this.getIdFromItem(item);
-    const domFef = this.itemsRefById[id];
-    this.itemsHeightById[id] = domFef.offsetHeight;
+    this.itemsHeightById[id] = $element.offsetHeight;
   }
 
   setItemRef(ref, item) {
-    const id = this.getIdFromItem(item);
-    this.itemsRefById[id] = ref;
-
-    // cache item height
-    if (this.itemsHeightById[id] === undefined) {
-      this.calcItemHeight(item);
+    if (ref === null) {
+      return;
     }
+
+    this.updateItemHeight(item, ref);
   }
 
   setRef(ref) {
@@ -76,14 +76,14 @@ class VirtualScroller extends React.PureComponent {
     return {
       key: id,
       item,
-      setRef: ref => this.setItemRef(ref, item),
-      onHeightChange: () => this.calcItemHeight(item),
+      setRef: ref => {
+        this.setItemRef(ref, item)
+      }
     };
   }
 
   cacheContainerInfo() {
     this.cachedContainerMetric.height = this.containerDom.clientHeight;
-    this.scrollTop = getScrollTop(this.containerDom);
   }
 
   calcBeforeByItem(itemIndex, viewportStart, viewportEnd, accOffset) {
@@ -151,11 +151,7 @@ class VirtualScroller extends React.PureComponent {
     };
   }
 
-  updateProjection() {
-    const { items } = this.props;
-
-    const viewportStart = this.scrollTop;
-    const viewportEnd = this.scrollTop + this.cachedContainerMetric.height;
+  calcProjection(items, viewportStart, viewportEnd) {
     let accOffset = 0;
     let indexOfFisrtItemInViewport;
     for (let index = 0; index < items.length; index++) {
@@ -183,11 +179,19 @@ class VirtualScroller extends React.PureComponent {
       accOffset
     );
     const renderedItems = [...before.items, ...after.items];
-    this.setState({
+    
+    return {
       beforePadding: before.padding,
       afterPadding: after.padding,
       renderedItems,
-    });
+    };
+  }
+
+  updateProjection() {
+    const viewportStart = this.scrollTop;
+    const viewportEnd = this.scrollTop + this.cachedContainerMetric.height;
+
+    this.setState(this.calcProjection(this.props.items, viewportStart, viewportEnd));
   }
 
   handleScroll(event) {
@@ -196,9 +200,23 @@ class VirtualScroller extends React.PureComponent {
     this.updateProjection();
   }
 
+  handleResize() {
+    // update container metric, it may changes.
+    this.cacheContainerInfo();
+  }
+
   componentDidMount() {
     this.cacheContainerInfo();
     this.updateProjection();
+
+    window.addEventListener('resize', this.handleResize, false);
+  }
+
+  componentWillMount() {
+    window.removeEventListener('resize', this.handleResize, false);
+  }
+
+  componentDidUpdate() {
   }
 
   render() {

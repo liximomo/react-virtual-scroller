@@ -22,8 +22,16 @@
         };
 
         renderItem = ({ item, key, setRef }) => (
-          <div key={key} ref={setRef} style={{ height: item.height }}>
-            {item.id}
+          <div
+            key={key}
+            ref={setRef}
+            style={{ height: item.height }}
+            className="item"
+            style={{ '--aspect-ratio': 300 / item.height }}
+          >
+            <div>
+              {item.id}
+            </div>
           </div>
         );
 
