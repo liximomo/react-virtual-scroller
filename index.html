@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>preview</title>
     <link rel="stylesheet" href="./dist/style.css">
+    <style>
+      html, body {
+        margin: 0;
+        padding: 0;
+      }
+    </style>
   </head>
   <body>
     <div id="app"></div>
@@ -21,10 +27,8 @@
           }))
         };
 
-        renderItem = ({ item, key, setRef }) => (
+        renderItem = (item) => (
           <div
-            key={key}
-            ref={setRef}
             style={{ height: item.height }}
             className="item"
             style={{ '--aspect-ratio': 300 / item.height }}
