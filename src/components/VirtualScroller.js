@@ -1,51 +1,104 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import recomputed from 'recomputed';
+import throttle from 'lodash.throttle';
 import List from './List';
+import createScheduler from '../utlis/createScheduler';
+import Rectangle from '../utlis/Rectangle';
+
+function findIndex(list, predictor) {
+  for (let index = 0; index < list.length; index++) {
+    if (predictor(list[index], index)) {
+      return index;
+    }
+  }
+
+  return -1;
+}
 
 function getScrollTop(dom) {
   return dom.scrollTop;
 }
 
 function getHeightForDomNode(node) {
-  return node ? node.getBoundingClientRect().height : 0
+  return node ? node.getBoundingClientRect().height : 0;
+}
+
+function collectRect(list, heights, defaultHeight) {
+  const rects = {};
+  let top = 0;
+  list.forEach(item => {
+    const id = item.id;
+    const height = heights[id] !== undefined ? heights[id] : defaultHeight;
+    rects[id] = new Rectangle({
+      top,
+      height,
+    });
+
+    // eslint-disable-next-line no-param-reassign
+    top += height;
+  });
+
+  return rects;
 }
 
 class VirtualScroller extends React.PureComponent {
   static defaultProps = {
     getHeightForDomNode,
+    offscreenToViewportRatio: 1.8,
     bufferItemCount: 3,
     // string or func
     identityFunction: a => a.id,
     items: [],
-    assumedItemHeight: 100,
+    assumedItemHeight: 200,
     setInnerRef: () => null,
   };
 
   static propTypes = {
+    offscreenToViewportRatio: PropTypes.number,
     renderItem: PropTypes.func.isRequired,
   };
 
   state = {
-    beforePadding: 0,
-    afterPadding: 0,
-    renderedItems: [],
+    sliceStart: 0,
+    sliceEnd: 0,
   };
 
   constructor(props) {
     super(props);
 
     this._getDrivedProps(props);
+    this._heights = {};
+
+    this._getRectangles = recomputed(
+      this,
+      (_, __, obj) => obj.list,
+      (_, __, obj) => obj._heights,
+      // eslint-disable-next-line no-shadow
+      props => props.assumedItemHeight,
+      collectRect
+    );
+
+    this._getSlice = recomputed(
+      this,
+      (_, __, obj) => obj.list,
+      (_, state) => state.sliceStart,
+      (_, state) => state.sliceEnd,
+      (list, sliceStart, sliceEnd) => list.slice(sliceStart, sliceEnd)
+    );
+
     this.scrollTop = 0;
     this.cachedContainerMetric = {};
-    this._heights = {};
     this.scroller = null;
+    this.setScroller = this.setScroller.bind(this);
 
     this._handleRefUpdate = this._handleRefUpdate.bind(this);
-    this.setScroller = this.setScroller.bind(this);
-    this.handleScroll = this.handleScroll.bind(this);
+    this._update = this._update.bind(this);
+
+    const updateScheduler = createScheduler(this._update, window.requestAnimationFrame);
+    this._handleScroll = throttle(updateScheduler, 100, { trailing: true });
     this.handleResize = this.handleResize.bind(this);
 
-    this._heights = {};
     // anchor to keep scroll position stable
     this.anchor = null;
   }
@@ -60,7 +113,7 @@ class VirtualScroller extends React.PureComponent {
     }
 
     const itemHeights = this._listRef.getItemHeights();
-  
+
     this._heights = Object.assign({}, this._heights, itemHeights);
   }
 
@@ -81,9 +134,7 @@ class VirtualScroller extends React.PureComponent {
 
   getItemHeight(item) {
     const id = item.id;
-    return this._heights[id] !== undefined
-      ? this._heights[id]
-      : this.props.assumedItemHeight;
+    return this._heights[id] !== undefined ? this._heights[id] : this.props.assumedItemHeight;
   }
 
   updateItemHeight(item, $element) {
@@ -105,8 +156,8 @@ class VirtualScroller extends React.PureComponent {
       key: id,
       item,
       setRef: ref => {
-        this.setItemRef(ref, item)
-      }
+        this.setItemRef(ref, item);
+      },
     };
   }
 
@@ -114,118 +165,62 @@ class VirtualScroller extends React.PureComponent {
     this.cachedContainerMetric.height = this.scroller.clientHeight;
   }
 
-  calcBeforeByItem(itemIndex, viewportStart, viewportEnd, accOffset) {
-    const { bufferItemCount } = this.props;
-    const items = this.list;
-    const item = items[itemIndex];
-    const itemSpcace = this.getItemHeight(item);
-
-    const inViewportHeight = accOffset - viewportStart;
-    const outViewportHeight = itemSpcace - inViewportHeight;
-    let padding = viewportStart - outViewportHeight;
-
-    const bufferItems = items.slice(itemIndex - bufferItemCount, itemIndex);
-    const bufferHeight = bufferItems.reduce((acc, bufferItem) => {
-      // eslint-disable-next-line no-param-reassign
-      acc = acc + this.getItemHeight(bufferItem);
-      return acc;
-    }, 0);
-
-    padding -= bufferHeight;
-
+  _computeBlankSpace() {
+    const list = this.list;
+    const {
+      sliceStart,
+      sliceEnd
+    } = this.state;
+    const rects = this._getRectangles();
+    const lastIndex = list.length - 1;
     return {
-      padding,
-      items: [...bufferItems, item],
+      blankSpaceAbove: list.length <= 0 ? 0 : rects[list[sliceStart].id].getTop() - rects[list[0].id].getTop(),
+      blankSpaceBelow: sliceEnd >= list.length ? 0 : rects[list[lastIndex].id].getBottom() - rects[list[sliceEnd].id].getTop(),
     };
   }
 
-  calcAfterByItem(itemIndex, viewportStart, viewportEnd, accOffset) {
-    const { bufferItemCount } = this.props;
-    const items = this.list;
-    const visibleItems = [];
-    let lastItemIndex;
-    for (let index = itemIndex + 1; index < items.length; index++) {
-      const item = items[index];
-      const itemSpcace = this.getItemHeight(item);
-      // eslint-disable-next-line no-param-reassign
-      accOffset += itemSpcace;
-      visibleItems.push(item);
-
-      if (accOffset >= viewportEnd) {
-        lastItemIndex = index;
-        break;
-      }
-    }
-
-    let scrollHeight = accOffset;
-    for (let index = lastItemIndex + 1; index < items.length; index++) {
-      const item = items[index];
-      const itemSpcace = this.getItemHeight(item);
-      scrollHeight += itemSpcace;
-    }
-
-    let padding = scrollHeight - accOffset;
-    const bufferItems = items.slice(lastItemIndex + 1, lastItemIndex + 1 + bufferItemCount);
-    const bufferHeight = bufferItems.reduce((acc, bufferItem) => {
-      // eslint-disable-next-line no-param-reassign
-      acc = acc + this.getItemHeight(bufferItem);
-      return acc;
-    }, 0);
-
-    padding -= bufferHeight;
-
-    return {
-      padding,
-      items: [...visibleItems, ...bufferItems],
-    };
-  }
-
-  calcProjection(items, viewportStart, viewportEnd) {
-    let accOffset = 0;
-    let indexOfFisrtItemInViewport;
-    for (let index = 0; index < items.length; index++) {
-      const item = items[index];
-      const itemSpcace = this.getItemHeight(item);
-      accOffset += itemSpcace;
-
-      if (accOffset > viewportStart) {
-        // find fisrt item in viewport
-        indexOfFisrtItemInViewport = index;
-        break;
-      }
-    }
-
-    const before = this.calcBeforeByItem(
-      indexOfFisrtItemInViewport,
-      viewportStart,
-      viewportEnd,
-      accOffset
-    );
-    const after = this.calcAfterByItem(
-      indexOfFisrtItemInViewport,
-      viewportStart,
-      viewportEnd,
-      accOffset
-    );
-    const renderedItems = [...before.items, ...after.items];
-    
-    return {
-      beforePadding: before.padding,
-      afterPadding: after.padding,
-      renderedItems,
-    };
-  }
-
-  updateProjection() {
-    const viewportStart = this.scrollTop;
-    const viewportEnd = this.scrollTop + this.cachedContainerMetric.height;
-
-    this.setState(this.calcProjection(this.list, viewportStart, viewportEnd));
-  }
-
-  handleScroll() {
+  _getRelativeViewportRect() {
     this.scrollTop = getScrollTop(this.scroller);
-    this.updateProjection();
+    return new Rectangle({
+      top: this.scrollTop,
+      height: this.cachedContainerMetric.height,
+    });
+  }
+
+  _update() {
+    const list = this.list;
+    const viewportRect = this._getRelativeViewportRect();
+
+    const offscreenHeight = viewportRect.getHeight() * this.props.offscreenToViewportRatio;
+    const renderRectTop = viewportRect.getTop() - offscreenHeight;
+    const renderRectBottom = viewportRect.getBottom() + offscreenHeight;
+
+    // todo find first by iterating rects
+    const rects = this._getRectangles();
+
+    let startIndex = findIndex(list, item => rects[item.id].getBottom() > renderRectTop);
+    if (startIndex < 0) {
+      startIndex = list.length - 1;
+    }
+  
+    let endIndex = findIndex(list.slice(startIndex), item => rects[item.id].getTop() >= renderRectBottom);
+    endIndex = endIndex >= 0 ? startIndex + endIndex : list.length;
+
+    this._setSlice(startIndex, endIndex);
+  }
+
+  _setSlice(start, end) {
+    const {
+      sliceStart,
+      sliceEnd
+    } = this.state;
+  
+    if (sliceStart !== start || sliceEnd !== end) {
+      this.setState({
+        sliceStart: start,
+        sliceEnd: end,
+      });
+    }
   }
 
   handleResize() {
@@ -235,7 +230,7 @@ class VirtualScroller extends React.PureComponent {
 
   componentDidMount() {
     this.cacheContainerInfo();
-    this.updateProjection();
+    this._update();
 
     this._postRenderProcessing();
     window.addEventListener('resize', this.handleResize, false);
@@ -254,22 +249,18 @@ class VirtualScroller extends React.PureComponent {
   }
 
   render() {
-    const { beforePadding, afterPadding } = this.state;
+    const { blankSpaceAbove, blankSpaceBelow } = this._computeBlankSpace();
 
     // eslint-disable-next-line
     const { renderItem, cssClass, getHeightForDomNode } = this.props;
 
     return (
-      <div
-        ref={this.setScroller}
-        className={cssClass}
-        onScroll={this.handleScroll}
-      >
+      <div ref={this.setScroller} className={cssClass} onScroll={this._handleScroll}>
         <List
           ref={this._handleRefUpdate}
-          list={this.state.renderedItems}
-          blankSpaceAbove={beforePadding}
-          blankSpaceBelow={afterPadding}
+          list={this._getSlice()}
+          blankSpaceAbove={blankSpaceAbove}
+          blankSpaceBelow={blankSpaceBelow}
           renderItem={renderItem}
           getHeightForDomNode={getHeightForDomNode}
         />

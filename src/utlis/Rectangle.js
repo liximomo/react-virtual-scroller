@@ -2,7 +2,7 @@ function isBetween(value, begin, end) {
   return value >= begin && value < end;
 }
 
-class Rect {
+class Rectangle {
   constructor({ top = 0, left = 0, height = 0, width = 0 } = {}) {
     this._top = top;
     this._left = left;
@@ -74,7 +74,7 @@ class Rect {
       top += y;
     }
 
-    return new Rect({
+    return new Rectangle({
       left,
       top,
       width: this.getWidth(),
@@ -83,4 +83,4 @@ class Rect {
   }
 }
 
-export default Rect;
+export default Rectangle;

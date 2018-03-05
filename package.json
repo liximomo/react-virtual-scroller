@@ -48,7 +48,10 @@
     "rollup-plugin-uglify": "^2.0.1"
   },
   "dependencies": {
-    "prop-types": "^15.6.1"
+    "lodash.throttle": "^4.1.1",
+    "prop-types": "^15.6.1",
+    "recomputed": "^1.0.1-alpha.1",
+    "reselect": "^3.0.1"
   },
   "peerDependencies": {
     "react": "^16.2.0",
