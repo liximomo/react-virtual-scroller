@@ -3,12 +3,18 @@ import PropTypes from 'prop-types';
 
 const nullFunc = () => null;
 
+function getHeightForDomNode(node) {
+  return node ? node.getBoundingClientRect().height : 0;
+}
+
 class List extends React.PureComponent {
   static defaultProps = {
+    getHeightForDomNode,
     list: [],
   };
 
   static propTypes = {
+    getHeightForDomNode: PropTypes.func,
     blankSpaceAbove: PropTypes.number.isRequired,
     blankSpaceBelow: PropTypes.number.isRequired,
     renderItem: PropTypes.func.isRequired,

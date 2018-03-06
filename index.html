@@ -42,13 +42,10 @@
         render() {
           return (
             <VirtualScroller
-              cssClass="list"
               items={this.state.datas}
               renderItem={this.renderItem}
-              bufferItemCount={3}
-              averageHeight={150}
             />
-          )
+          );
         }
       }
 
