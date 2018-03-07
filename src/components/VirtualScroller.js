@@ -2,26 +2,24 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import recomputed from 'recomputed';
 import Updater from './Updater';
-import Viewport from '../Viewport';
+import Viewport from '../modules/Viewport';
+
+const defaultIdentityFunction = a => a.id;
 
 class VirtualScroller extends React.PureComponent {
-  static defaultProps = {
-    offscreenToViewportRatio: 1.8,
-    bufferItemCount: 3,
-    // string or func
-    identityFunction: a => a.id,
-    items: [],
-    assumedItemHeight: 200,
-    setInnerRef: () => null,
-  };
-
   static propTypes = {
-    offscreenToViewportRatio: PropTypes.number,
+    items: PropTypes.arrayOf(PropTypes.any).isRequired,
     renderItem: PropTypes.func.isRequired,
+    viewport: PropTypes.instanceOf(Viewport).isRequired,
+    identityFunction: PropTypes.func,
+    offscreenToViewportRatio: PropTypes.number,
+    assumedItemHeight: PropTypes.number,
   };
 
-  state = {
-    wrapperNode: null,
+  static defaultProps = {
+    identityFunction: defaultIdentityFunction,
+    offscreenToViewportRatio: 1.8,
+    assumedItemHeight: 400,
   };
 
   constructor(props) {
@@ -55,34 +53,20 @@ class VirtualScroller extends React.PureComponent {
         return resultList;
       }
     );
-
-    this._getViewport = recomputed(
-      this,
-      (_, state) => state.wrapperNode,
-      node => new Viewport(window, node)
-    );
     /* eslint-enable no-shadow */
-
-    this._receiveWrapperNode = this._receiveWrapperNode.bind(this);
-  }
-
-  _receiveWrapperNode(ref) {
-    this.setState({
-      wrapperNode: ref,
-    });
   }
 
   render() {
-    const { wrapperNode } = this.state;
-    const { renderItem } = this.props;
+    const { renderItem, assumedItemHeight, viewport } = this.props;
 
     return (
-      <div className="list" ref={this._receiveWrapperNode}>
-        {wrapperNode ? (
-          <Updater list={this._getList()} renderItem={renderItem} viewport={this._getViewport()} />
-        ) : null}
-      </div>
-    );
+      <Updater
+        list={this._getList()}
+        renderItem={renderItem}
+        assumedItemHeight={assumedItemHeight}
+        viewport={viewport}
+      />
+    )
   }
 }
 

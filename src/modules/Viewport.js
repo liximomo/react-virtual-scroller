@@ -60,7 +60,7 @@ class Viewport {
   }
 
   scrollBy(vertically) {
-    if (this._window) {
+    if (this._useWindow) {
       this._window.scrollBy(0, vertically);
     } else {
       this._scroller.scrollTop += vertically;

@@ -1,41 +1,43 @@
 {
   "name": "@liximomo/react-virtual-scroller",
   "version": "0.0.1",
-  "main": "dist/react-virtual-scroller.cjs.js",
-  "module": "dist/react-virtual-scroller.esm.js",
+  "main": "lib/index.js",
+  "jsnext:main": "es/index.js",
+  "module": "es/index.js",
   "browser": "dist/react-virtual-scroller.umd.js",
   "author": "liximomo <liximomo@gmail.com> (https://liximomo.github.io/)",
   "license": "MIT",
   "files": [
-    "dist/"
+    "dist",
+    "es",
+    "lib"
   ],
   "scripts": {
     "start": "npm-run-all --parallel watch:*",
-    "watch:js": "NODE_ENV=development rollup -c -w",
-    "watch:css": "postcss src/css/style.css -o dist/style.css -m -w",
+    "watch:js": "BABEL_ENV=umd NODE_ENV=development rollup -c -w",
     "prebuild": "npm run lint",
-    "build": "npm run build:js && npm run build:css",
-    "build:js": "NODE_ENV=production rollup -c",
-    "build:css": "postcss src/css/style.css -o dist/style.css --no-map",
-    "postbuild": "npm run compress",
-    "compress": "npm run compress:css",
-    "compress:css": "postcss dist/style.css -u cssnano -o dist/style.min.css --no-map",
-    "lint": "eslint src/**/*.js"
+    "build": "npm run build:commonjs && npm run build:esm && npm run build:umd && npm run build:umd:min",
+    "build:commonjs": "BABEL_ENV=commonjs NODE_ENV=production babel src --out-dir lib",
+    "build:esm": "BABEL_ENV=esm NODE_ENV=production babel src --out-dir es",
+    "build:umd": "BABEL_ENV=umd NODE_ENV=development rollup -c",
+    "build:umd:min": "BABEL_ENV=umd NODE_ENV=production rollup -c",
+    "lint": "eslint src/**/*.js",
+    "test": "jest"
   },
   "devDependencies": {
+    "babel-cli": "^6.26.0",
     "babel-core": "^6.26.0",
     "babel-eslint": "^8.1.2",
     "babel-plugin-external-helpers": "^6.22.0",
-    "babel-plugin-syntax-dynamic-import": "^6.18.0",
     "babel-plugin-transform-class-properties": "^6.24.1",
-    "babel-plugin-transform-es2015-destructuring": "^6.23.0",
+    "babel-plugin-transform-es2015-modules-commonjs": "^6.26.0",
     "babel-plugin-transform-object-rest-spread": "^6.26.0",
     "babel-plugin-transform-react-jsx": "^6.24.1",
     "babel-plugin-transform-regenerator": "^6.26.0",
-    "babel-plugin-transform-runtime": "^6.23.0",
     "babel-preset-env": "^1.6.1",
     "cssnano": "^3.10.0",
     "eslint": "^4.14.0",
+    "jest": "^22.4.2",
     "npm-run-all": "^4.1.2",
     "postcss-cli": "^4.1.1",
     "postcss-cssnext": "^3.0.2",
@@ -48,6 +50,8 @@
     "rollup-plugin-uglify": "^2.0.1"
   },
   "dependencies": {
+    "babel-plugin-transform-react-remove-prop-types": "^0.4.13",
+    "eslint-plugin-react": "^7.7.0",
     "lodash.throttle": "^4.1.1",
     "prop-types": "^15.6.1",
     "recomputed": "1.0.1-alpha.2"
@@ -55,5 +59,10 @@
   "peerDependencies": {
     "react": "^16.2.0",
     "react-dom": "^16.2.0"
+  },
+  "jest": {
+    "testMatch": [
+      "**/test/*.js"
+    ]
   }
 }

@@ -5,7 +5,7 @@ import replace from 'rollup-plugin-replace'
 import uglify from 'rollup-plugin-uglify';
 import pkg from './package.json';
 
-const input = 'src/main.js';
+const input = 'src/index.js';
 
 const onwarn = function(warning) {
   // Skip certain warnings
@@ -40,18 +40,6 @@ const umd = {
   plugins
 };
 
-// CommonJS (for Node) and ES module (for bundlers) build.
-// (We could have three entries in the configuration array
-// instead of two, but it's quicker to generate multiple
-// builds from a single configuration where possible, using
-// the `targets` option which can specify `dest` and `format`)
-const jsmodule = {
-  input,
-  output: [{ file: pkg.main, format: 'cjs' }, { file: pkg.module, format: 'es' }],
-  onwarn,
-  plugins,
-}
-
 if (process.env.NODE_ENV === 'development') {
   // nothing current
 } else if (process.env.NODE_ENV === 'production') {
@@ -77,7 +65,4 @@ if (process.env.NODE_ENV === 'development') {
   umd.plugins = umd.plugins.concat(prodPlugins);
 }
 
-export default [
-  umd,
-  jsmodule
-];
+export default umd;

@@ -4,11 +4,49 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>preview</title>
-    <link rel="stylesheet" href="./dist/style.css">
     <style>
       html, body {
         margin: 0;
         padding: 0;
+      }
+
+      .action {
+        position: absolute;
+        top: 0;
+        right: 0;
+      }
+
+      .list {
+        /* height: 600px;
+        border: 1px solid gray;
+        overflow-x: hidden;
+        overflow-y: auto; */
+
+        margin: 0;
+        padding: 0;
+        overflow-x: hidden;
+        overflow-y: scroll;
+        -webkit-overflow-scrolling: touch;
+        width: 100%;
+        height: 100%;
+        position: absolute;
+      }
+
+      [style*="--aspect-ratio"] {
+        position: relative;
+      }
+
+      [style*="--aspect-ratio"]::before {
+        content: "";
+        display: block;
+        padding-bottom: calc(100% / (var(--aspect-ratio)));
+      }
+
+      [style*="--aspect-ratio"] > :first-child {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
       }
     </style>
   </head>
@@ -19,13 +57,28 @@
     <script type="text/javascript" src="https://unpkg.com/react-dom@16.2.0/umd/react-dom.development.js"></script>
     <script src="./dist/react-virtual-scroller.umd.js"></script>
     <script type="text/babel">
+
+      const Viewport = VirtualScroller.Viewport;
+      const VirtualScrollerComponent = VirtualScroller.default;
+
+      function getData(num, from = 0) {
+        return new Array(num).fill(1).map((_, index) => ({
+          id: from + index,
+          height: Math.random() * 200 + 50,
+        }));
+      }
+
       class App extends React.Component {
         state = {
-          datas: new Array(100).fill(1).map((_, index) => ({
-            id: index,
-            height: Math.random() * 200 + 50,
-          }))
+          wrapperNode: null,
+          datas: getData(100),
         };
+
+        constructor(props) {
+          super(props);
+
+          this.receiveRef = this.receiveRef.bind(this);
+        }
 
         renderItem = (item) => (
           <div
@@ -39,12 +92,27 @@
           </div>
         );
 
+        receiveRef(ref) {
+          this.setState({ wrapperNode: ref });
+        }
+
         render() {
+          const {
+            wrapperNode
+          } = this.state;
+
           return (
-            <VirtualScroller
-              items={this.state.datas}
-              renderItem={this.renderItem}
-            />
+            <div className="list" ref={this.receiveRef}>
+              {
+                wrapperNode ? (
+                  <VirtualScrollerComponent
+                    items={this.state.datas}
+                    renderItem={this.renderItem}
+                    viewport={new Viewport(window, wrapperNode)}
+                  />
+                ) : null
+              }
+            </div>
           );
         }
       }

@@ -3,33 +3,60 @@
     [
       "env",
       {
-        "targets": {
-          "ie": 9,
-          "uglify": true
-        },
-        "useBuiltIns": false,
         "modules": false
       }
     ]
   ],
   "plugins": [
-    "transform-es2015-destructuring",
-    "transform-class-properties",
     ["transform-object-rest-spread", { "useBuiltIns": true }],
+    "transform-class-properties",
     [
       "transform-react-jsx",
       {
         "useBuiltIns": true
       }
     ],
-    [
-      "transform-runtime",
-      {
-        "helpers": false,
-        "polyfill": false,
-        "regenerator": true
-      }
-    ],
-    "syntax-dynamic-import"
-  ]
+    "transform-react-remove-prop-types"
+  ],
+  "env": {
+    "commonjs": {
+      "presets": [
+        [
+          "env",
+          {
+            "modules": "commonjs"
+          }
+        ]
+      ],
+      "plugins": ["transform-class-properties"]
+    },
+    "esm": {
+      "presets": [
+        [
+          "env",
+          {
+            "modules": false
+          }
+        ]
+      ],
+      "plugins": ["transform-class-properties"]
+    },
+    "umd": {
+      "presets": [
+        [
+          "env",
+          {
+            "targets": {
+              "ie": 9
+            },
+            "modules": false
+          }
+        ]
+      ],
+      "plugins": ["transform-class-properties"]
+    },
+    "test": {
+      "plugins": ["transform-es2015-modules-commonjs"]
+    }
+  }
 }
