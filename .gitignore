@@ -6,3 +6,4 @@ yarn.lock
 /dist
 /es
 /lib
+/website/build/
