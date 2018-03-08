@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Window as scroller</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+      }
+
+      .App__head {
+        height: 200px;
+        background-color: #999;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="app"></div>
+    <script src="https://unpkg.com/babel-standalone@6.26.0/babel.min.js"></script>
+    <script type="text/javascript" src="https://unpkg.com/react@16.2.0/umd/react.development.js"></script>
+    <script type="text/javascript" src="https://unpkg.com/react-dom@16.2.0/umd/react-dom.development.js"></script>
+    <script src="js/react-virtual-scroller.umd.js"></script>
+    <script type="text/babel">
+
+      const Viewport = VirtualScroller.Viewport;
+      const VirtualScrollerComponent = VirtualScroller.default;
+
+      function getData(num, from = 0) {
+        return new Array(num).fill(1).map((_, index) => ({
+          id: from + index,
+          height: Math.random() * 100 + 50,
+        }));
+      }
+      
+      class List extends React.PureComponent {
+        state = {
+          wrapperNode: null,
+        };
+
+        constructor(props) {
+          super(props);
+          this.receiveRef = this.receiveRef.bind(this);
+        }
+
+        receiveRef(ref) {
+          this.setState({ wrapperNode: ref });
+        }
+
+        getViewport() {
+          const {
+            wrapperNode
+          } = this.state;
+
+          if (!this._viewport) {
+            this._viewport = new Viewport(window);
+          }
+          
+          // offset of virtualScrollerComponent top to window top.
+          this._viewport.setOffsetTop(200);
+          return this._viewport;
+        }
+
+        render() {
+          const {
+            wrapperNode
+          } = this.state;
+
+          const {
+            items,
+            renderItem,
+          } = this.props;
+
+          return (
+            <div className="list" ref={this.receiveRef}>
+              {
+                wrapperNode ? (
+                  <VirtualScrollerComponent
+                    items={items}
+                    renderItem={renderItem}
+                    viewport={this.getViewport()}
+                    assumedItemHeight={100}
+                  />
+                ) : null
+              }
+            </div>
+          );
+        }
+      }
+      
+      class App extends React.Component {
+        state = {
+          datas: getData(10000),
+        };
+
+        constructor(props) {
+          super(props);
+
+          this.renderItem = this.renderItem.bind(this);
+        }
+
+        renderItem(item, index) {
+          return (
+            <div
+              className="item"
+              style={{
+                height: item.height,
+                ...(index % 2 !== 0 ? { backgroundColor: '#ccc' } : {}),
+              }}
+            >
+              <div>
+                {item.id}
+              </div>
+            </div>
+          );
+        } 
+
+        render() {
+          return (
+            <div className="App" >
+              <div className="App__head">Site Head</div>
+              <List
+                items={this.state.datas}
+                renderItem={this.renderItem}
+              />
+            </div>
+          );
+        }
+      }
+
+      ReactDOM.render(
+        <App />,
+        document.getElementById('app')
+      );
+    </script>
+  </body>
+
+</html>

@@ -74,8 +74,11 @@ function offsetCorrection(prevPos, nextPos) {
   }
 
   const anchorId = anchor.id;
-  const offsetToViewport = prevPos.getItemRect(anchorId).getTop() - prevPos.getViewportRect().getTop();
-  return nextPos.getItemRect(anchorId).getTop() - nextPos.getViewportRect().getTop() - offsetToViewport;
+  const offsetToViewport =
+    prevPos.getItemRect(anchorId).getTop() - prevPos.getViewportRect().getTop();
+  return (
+    nextPos.getItemRect(anchorId).getTop() - nextPos.getViewportRect().getTop() - offsetToViewport
+  );
 }
 
 function collectRect(list, heights, defaultHeight) {
@@ -108,7 +111,6 @@ class Updater extends React.PureComponent {
   static defaultProps = {
     offscreenToViewportRatio: 1.8,
     assumedItemHeight: 400,
-
   };
 
   constructor(props) {
@@ -329,6 +331,7 @@ class Updater extends React.PureComponent {
 
   render() {
     const { blankSpaceAbove, blankSpaceBelow } = this._computeBlankSpace();
+    const { sliceStart } = this.state;
 
     // eslint-disable-next-line
     const { renderItem } = this.props;
@@ -339,7 +342,9 @@ class Updater extends React.PureComponent {
         list={this._getSlice()}
         blankSpaceAbove={blankSpaceAbove}
         blankSpaceBelow={blankSpaceBelow}
-        renderItem={renderItem}
+        renderItem={(data, index) => {
+          return renderItem(data, sliceStart + index);
+        }}
       />
     );
   }

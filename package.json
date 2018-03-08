@@ -21,6 +21,7 @@
     "build:esm": "BABEL_ENV=esm NODE_ENV=production babel src --out-dir es",
     "build:umd": "BABEL_ENV=umd NODE_ENV=development rollup -c",
     "build:umd:min": "BABEL_ENV=umd NODE_ENV=production rollup -c",
+    "postbuild": "cp dist/* website/static/js/",
     "lint": "eslint src/**/*.js",
     "test": "jest"
   },

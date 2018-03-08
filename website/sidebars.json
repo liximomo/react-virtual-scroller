@@ -1,0 +1,6 @@
+{
+  "api": {
+    "Components": ["VirtualScroller"],
+    "Modules": ["Viewport"]
+  }
+}
