@@ -10,27 +10,16 @@
         padding: 0;
       }
 
-      .action {
-        position: absolute;
-        top: 0;
-        right: 0;
+      .head {
+        height: 100px;
       }
 
-      .list {
-        /* height: 600px;
-        border: 1px solid gray;
-        overflow-x: hidden;
-        overflow-y: auto; */
-
-        margin: 0;
-        padding: 0;
+      /* .list {
         overflow-x: hidden;
         overflow-y: scroll;
         -webkit-overflow-scrolling: touch;
-        width: 100%;
-        height: 100%;
-        position: absolute;
-      }
+        height: 600px;
+      } */
 
       [style*="--aspect-ratio"] {
         position: relative;
@@ -96,22 +85,38 @@
           this.setState({ wrapperNode: ref });
         }
 
+        getViewport() {
+          const {
+            wrapperNode
+          } = this.state;
+
+          if (!this._viewport) {
+            this._viewport = new Viewport(window, wrapperNode);
+          }
+
+          this._viewport.setOffsetTop(100);
+          return this._viewport;
+        }
+
         render() {
           const {
             wrapperNode
           } = this.state;
 
           return (
-            <div className="list" ref={this.receiveRef}>
-              {
-                wrapperNode ? (
-                  <VirtualScrollerComponent
-                    items={this.state.datas}
-                    renderItem={this.renderItem}
-                    viewport={new Viewport(window, wrapperNode)}
-                  />
-                ) : null
-              }
+            <div>
+              <div className="list" ref={this.receiveRef}>
+                <div className="head">head</div>
+                {
+                  wrapperNode ? (
+                    <VirtualScrollerComponent
+                      items={this.state.datas}
+                      renderItem={this.renderItem}
+                      viewport={this.getViewport()}
+                    />
+                  ) : null
+                }
+              </div>
             </div>
           );
         }

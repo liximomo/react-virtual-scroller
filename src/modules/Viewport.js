@@ -31,6 +31,13 @@ class Viewport {
     };
   }
 
+  getRectRelativeTo(node) {
+    const top = node.getBoundingClientRect().top;
+    const scrollerTop = this._useWindow ? 0 : this._scroller.getBoundingClientRect().top;
+
+    return this.getRect().translateBy(0, Math.ceil(scrollerTop - top));
+  }
+
   setOffsetTop(value) {
     this._offsetTop = value;
   }

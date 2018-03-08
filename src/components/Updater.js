@@ -241,8 +241,8 @@ class Updater extends React.PureComponent {
     }
 
     const listNode = this._listRef.getWrapperNode();
-    const offsetTop = Math.ceil(listNode.getBoundingClientRect().top);
-    return this.props.viewport.getRect().translateBy(0, -offsetTop);
+    // const offsetTop = Math.ceil(listNode.getBoundingClientRect().top);
+    return this.props.viewport.getRectRelativeTo(listNode);
   }
 
   _update() {
