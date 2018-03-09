@@ -11,7 +11,7 @@ function createScheduler(callback, scheduler) {
       scheduler(update);
     }
     ticking = true;
-  }
+  };
 
   return requestTick;
 }

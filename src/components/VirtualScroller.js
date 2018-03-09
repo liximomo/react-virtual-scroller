@@ -3,8 +3,11 @@ import PropTypes from 'prop-types';
 import recomputed from 'recomputed';
 import Updater from './Updater';
 import Viewport from '../modules/Viewport';
+import ScrollTracker, { Condition } from '../modules/ScrollTracker';
 
 const defaultIdentityFunction = a => a.id;
+
+const nullFunction = () => null;
 
 class VirtualScroller extends React.PureComponent {
   static propTypes = {
@@ -14,12 +17,24 @@ class VirtualScroller extends React.PureComponent {
     identityFunction: PropTypes.func,
     offscreenToViewportRatio: PropTypes.number,
     assumedItemHeight: PropTypes.number,
+    nearEndProximityRatio: PropTypes.number,
+    nearStartProximityRatio: PropTypes.number,
+    onAtStart: PropTypes.func,
+    onNearStart: PropTypes.func,
+    onNearEnd: PropTypes.func,
+    onAtEnd: PropTypes.func,
   };
 
   static defaultProps = {
     identityFunction: defaultIdentityFunction,
     offscreenToViewportRatio: 1.8,
     assumedItemHeight: 400,
+    nearEndProximityRatio: 1.75,
+    nearStartProximityRatio: 0.25,
+    onAtStart: nullFunction,
+    onNearStart: nullFunction,
+    onNearEnd: nullFunction,
+    onAtEnd: nullFunction,
   };
 
   constructor(props) {
@@ -54,6 +69,48 @@ class VirtualScroller extends React.PureComponent {
       }
     );
     /* eslint-enable no-shadow */
+
+    this._handlePositioningUpdate = this._handlePositioningUpdate.bind(this);
+    this._createScrollTracker(props.nearStartProximityRatio, props.nearEndProximityRatio);
+  }
+
+  _handlePositioningUpdate(position) {
+    if (this._scrollTracker) {
+      this._scrollTracker.handlePositioningUpdate(position);
+    }
+  }
+
+  _createScrollTracker(nearStartProximityRatio, nearEndProximityRatio) {
+    this._scrollTracker = new ScrollTracker([
+      {
+        condition: Condition.nearTop(5),
+        callback: info => {
+          return this.props.onAtStart(info);
+        },
+      },
+      {
+        condition: Condition.nearTopRatio(nearStartProximityRatio),
+        callback: info => {
+          return this.props.onNearStart(info);
+        },
+      },
+      {
+        condition: Condition.nearBottomRatio(nearEndProximityRatio),
+        callback: info => {
+          return this.props.onNearEnd(info);
+        },
+      },
+      {
+        condition: Condition.nearBottom(5),
+        callback: info => {
+          return this.props.onAtEnd(info);
+        },
+      },
+    ]);
+  }
+
+  componentWillReceiveProps(nextProps) {
+    this._createScrollTracker(nextProps.nearStartProximityRatio, nextProps.nearEndProximityRatio);
   }
 
   render() {
@@ -65,8 +122,9 @@ class VirtualScroller extends React.PureComponent {
         renderItem={renderItem}
         assumedItemHeight={assumedItemHeight}
         viewport={viewport}
+        onPositioningUpdate={this._handlePositioningUpdate}
       />
-    )
+    );
   }
 }
 

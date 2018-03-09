@@ -27,7 +27,7 @@ class Viewport {
     target.addEventListener(event, eventCallback);
 
     return () => {
-      target.removeEventListener(event, eventCallback)
+      target.removeEventListener(event, eventCallback);
     };
   }
 
@@ -53,7 +53,7 @@ class Viewport {
     if (this._useWindow) {
       return -1 * this._window.document.body.getBoundingClientRect().left;
     }
-  
+
     return this._scroller.scrollLeft;
   }
 
@@ -86,7 +86,8 @@ class Viewport {
 
   // listener triggered by programmatic scroll
   addProgrammaticScrollListener(listener) {
-    if (this._programticScrollListeners.indexOf(listener) < 0) this._programticScrollListeners.push(listener);
+    if (this._programticScrollListeners.indexOf(listener) < 0)
+      this._programticScrollListeners.push(listener);
     return () => this.removeProgrammaticScrollListener(listener);
   }
 

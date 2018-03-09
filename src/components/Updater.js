@@ -104,6 +104,7 @@ class Updater extends React.PureComponent {
     list: PropTypes.arrayOf(PropTypes.any).isRequired,
     renderItem: PropTypes.func.isRequired,
     viewport: PropTypes.instanceOf(Viewport).isRequired,
+    onPositioningUpdate: PropTypes.func,
     assumedItemHeight: PropTypes.number,
     offscreenToViewportRatio: PropTypes.number,
   };
@@ -141,8 +142,13 @@ class Updater extends React.PureComponent {
 
     this._handleRefUpdate = this._handleRefUpdate.bind(this);
     this._update = this._update.bind(this);
+    this._notifyPositioning = this._notifyPositioning.bind(this);
 
     this._scheduleUpdate = createScheduler(this._update, window.requestAnimationFrame);
+    this._schedulePositioningNotification = createScheduler(
+      this._notifyPositioning,
+      window.requestAnimationFrame
+    );
     this._handleScroll = throttle(this._scheduleUpdate, 100, { trailing: true });
   }
 
@@ -189,6 +195,7 @@ class Updater extends React.PureComponent {
     if (hasListChanged || Math.abs(heightState.heightDelta) >= this.props.assumedItemHeight) {
       this._scheduleUpdate();
     }
+    this._schedulePositioningNotification();
   }
 
   _getDefaultSlice(list) {
@@ -271,6 +278,7 @@ class Updater extends React.PureComponent {
       endIndex = list.length;
     }
 
+    this._schedulePositioningNotification();
     this._setSlice(startIndex, endIndex);
   }
 
@@ -282,6 +290,12 @@ class Updater extends React.PureComponent {
         sliceStart: start,
         sliceEnd: end,
       });
+    }
+  }
+
+  _notifyPositioning() {
+    if (!this._unmounted && this.props.onPositioningUpdate) {
+      this.props.onPositioningUpdate(this.getPositioning());
     }
   }
 

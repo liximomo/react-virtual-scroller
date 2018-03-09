@@ -58,7 +58,10 @@ class Rectangle {
     } else if (point.y === undefined) {
       return isBetween(point.x, this.getLeft(), this.getRight());
     } else {
-      return isBetween(point.y, this.getTop(), this.getBottom()) && isBetween(point.x, this.getLeft(), this.getRight());
+      return (
+        isBetween(point.y, this.getTop(), this.getBottom()) &&
+        isBetween(point.x, this.getLeft(), this.getRight())
+      );
     }
   }
 

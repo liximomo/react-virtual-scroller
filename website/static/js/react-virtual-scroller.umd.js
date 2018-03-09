@@ -1857,7 +1857,16 @@ var Position = function () {
           height: 0
         });
       }
-      return this._viewportRectangle;
+
+      var rects = this._rectangles;
+      var firstItemId = list[0].id;
+      var lastItemId = list[list.length - 1].id;
+      var top = rects[firstItemId].getTop();
+      var height = rects[lastItemId].getBottom() - top;
+      return new Rectangle({
+        top: top,
+        height: height
+      });
     }
   }, {
     key: 'getAllItems',
@@ -2197,8 +2206,10 @@ var Updater = function (_React$PureComponent) {
 
     _this._handleRefUpdate = _this._handleRefUpdate.bind(_this);
     _this._update = _this._update.bind(_this);
+    _this._notifyPositioning = _this._notifyPositioning.bind(_this);
 
     _this._scheduleUpdate = createScheduler(_this._update, window.requestAnimationFrame);
+    _this._schedulePositioningNotification = createScheduler(_this._notifyPositioning, window.requestAnimationFrame);
     _this._handleScroll = lodash_throttle(_this._scheduleUpdate, 100, { trailing: true });
     return _this;
   }
@@ -2251,6 +2262,7 @@ var Updater = function (_React$PureComponent) {
       if (hasListChanged || Math.abs(heightState.heightDelta) >= this.props.assumedItemHeight) {
         this._scheduleUpdate();
       }
+      this._schedulePositioningNotification();
     }
   }, {
     key: '_getDefaultSlice',
@@ -2337,6 +2349,7 @@ var Updater = function (_React$PureComponent) {
         endIndex = list.length;
       }
 
+      this._schedulePositioningNotification();
       this._setSlice(startIndex, endIndex);
     }
   }, {
@@ -2352,6 +2365,13 @@ var Updater = function (_React$PureComponent) {
           sliceStart: start,
           sliceEnd: end
         });
+      }
+    }
+  }, {
+    key: '_notifyPositioning',
+    value: function _notifyPositioning() {
+      if (!this._unmounted && this.props.onPositioningUpdate) {
+        this.props.onPositioningUpdate(this.getPositioning());
       }
     }
   }, {
@@ -2438,8 +2458,117 @@ Updater.defaultProps = {
   assumedItemHeight: 400
 };
 
+var PROXIMITY = {
+  INSIDE: 'inside',
+  OUTSIDE: 'outside'
+};
+
+var TRIGGER_CAUSE = {
+  INITIAL_POSITION: 'init',
+  MOVEMENT: 'movement',
+  LIST_UPDATE: 'list-update'
+};
+
+function getProximity(condition, position) {
+  return condition(position.getListRect(), position.getViewportRect()) ? PROXIMITY.INSIDE : PROXIMITY.OUTSIDE;
+}
+
+function findCause(prevState, nextState) {
+  var isInit = !prevState.proximity && nextState.proximity === PROXIMITY.INSIDE;
+  if (isInit) {
+    return TRIGGER_CAUSE.INITIAL_POSITION;
+  }
+
+  var isMovement = prevState.proximity === PROXIMITY.OUTSIDE && nextState.proximity === PROXIMITY.INSIDE;
+  if (isMovement) {
+    return TRIGGER_CAUSE.MOVEMENT;
+  }
+
+  var stay = prevState.proximity === PROXIMITY.INSIDE && nextState.proximity === PROXIMITY.INSIDE;
+  if (stay && prevState.listLength !== nextState.listLength) {
+    return TRIGGER_CAUSE.LIST_UPDATE;
+  }
+
+  return null;
+}
+
+var Condition = {
+  nearTop: function nearTop(distance) {
+    return function (list, viewport) {
+      return viewport.getTop() - list.getTop() <= distance;
+    };
+  },
+  nearBottom: function nearBottom(distance) {
+    return function (list, viewport) {
+      return list.getBottom() - viewport.getBottom() <= distance;
+    };
+  },
+  nearTopRatio: function nearTopRatio(ratio) {
+    return function (list, viewport) {
+      var viewportHeight = viewport.getHeight();
+      var distance = ratio * viewportHeight;
+      return viewport.getTop() - list.getTop() <= distance;
+    };
+  },
+  nearBottomRatio: function nearBottomRatio(ratio) {
+    return function (list, viewport) {
+      var viewportHeight = viewport.getHeight();
+      var distance = ratio * viewportHeight;
+      return list.getBottom() - viewport.getBottom() <= distance;
+    };
+  }
+};
+
+var ScrollTracker = function () {
+  function ScrollTracker(zones) {
+    classCallCheck(this, ScrollTracker);
+
+    this._handlers = zones.map(function (zone) {
+      return {
+        zone: zone,
+        state: {}
+      };
+    });
+  }
+
+  createClass(ScrollTracker, [{
+    key: 'handlePositioningUpdate',
+    value: function handlePositioningUpdate(position) {
+      this._handlers.forEach(function (_ref) {
+        var zone = _ref.zone,
+            state = _ref.state;
+        var condition = zone.condition,
+            callback = zone.callback;
+
+        var newProximity = getProximity(condition, position);
+        var newListLength = position.getList().length;
+        var triggerCause = findCause(state, {
+          proximity: newProximity,
+          listLength: newListLength
+        });
+
+        /* eslint-disable no-param-reassign */
+        state.proximity = newProximity;
+        state.listLength = newListLength;
+        /* eslint-enable */
+
+        if (triggerCause) {
+          callback({
+            triggerCause: triggerCause
+          });
+        }
+      });
+    }
+  }]);
+  return ScrollTracker;
+}();
+
 var defaultIdentityFunction = function defaultIdentityFunction(a) {
   return a.id;
+};
+
+var nullFunction = function nullFunction() {
+  return null;
 };
 
 var VirtualScroller$1 = function (_React$PureComponent) {
@@ -2475,10 +2604,52 @@ var VirtualScroller$1 = function (_React$PureComponent) {
       return resultList;
     });
     /* eslint-enable no-shadow */
+
+    _this._handlePositioningUpdate = _this._handlePositioningUpdate.bind(_this);
+    _this._createScrollTracker(props.nearStartProximityRatio, props.nearEndProximityRatio);
     return _this;
   }
 
   createClass(VirtualScroller, [{
+    key: '_handlePositioningUpdate',
+    value: function _handlePositioningUpdate(position) {
+      if (this._scrollTracker) {
+        this._scrollTracker.handlePositioningUpdate(position);
+      }
+    }
+  }, {
+    key: '_createScrollTracker',
+    value: function _createScrollTracker(nearStartProximityRatio, nearEndProximityRatio) {
+      var _this2 = this;
+
+      this._scrollTracker = new ScrollTracker([{
+        condition: Condition.nearTop(5),
+        callback: function callback(info) {
+          return _this2.props.onAtStart(info);
+        }
+      }, {
+        condition: Condition.nearTopRatio(nearStartProximityRatio),
+        callback: function callback(info) {
+          return _this2.props.onNearStart(info);
+        }
+      }, {
+        condition: Condition.nearBottomRatio(nearEndProximityRatio),
+        callback: function callback(info) {
+          return _this2.props.onNearEnd(info);
+        }
+      }, {
+        condition: Condition.nearBottom(5),
+        callback: function callback(info) {
+          return _this2.props.onAtEnd(info);
+        }
+      }]);
+    }
+  }, {
+    key: 'componentWillReceiveProps',
+    value: function componentWillReceiveProps(nextProps) {
+      this._createScrollTracker(nextProps.nearStartProximityRatio, nextProps.nearEndProximityRatio);
+    }
+  }, {
     key: 'render',
     value: function render() {
       var _props = this.props,
@@ -2491,7 +2662,8 @@ var VirtualScroller$1 = function (_React$PureComponent) {
         list: this._getList(),
         renderItem: renderItem,
         assumedItemHeight: assumedItemHeight,
-        viewport: viewport
+        viewport: viewport,
+        onPositioningUpdate: this._handlePositioningUpdate
       });
     }
   }]);
@@ -2501,7 +2673,13 @@ var VirtualScroller$1 = function (_React$PureComponent) {
 VirtualScroller$1.defaultProps = {
   identityFunction: defaultIdentityFunction,
   offscreenToViewportRatio: 1.8,
-  assumedItemHeight: 400
+  assumedItemHeight: 400,
+  nearEndProximityRatio: 1.75,
+  nearStartProximityRatio: 0.25,
+  onAtStart: nullFunction,
+  onNearStart: nullFunction,
+  onNearEnd: nullFunction,
+  onAtEnd: nullFunction
 };
 
 exports['default'] = VirtualScroller$1;

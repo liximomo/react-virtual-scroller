@@ -22,7 +22,16 @@ class Position {
         height: 0,
       });
     }
-    return this._viewportRectangle;
+
+    const rects = this._rectangles;
+    const firstItemId = list[0].id;
+    const lastItemId = list[list.length - 1].id;
+    const top = rects[firstItemId].getTop();
+    const height = rects[lastItemId].getBottom() - top;
+    return new Rectangle({
+      top,
+      height,
+    });
   }
 
   getAllItems() {
