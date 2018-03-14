@@ -70,8 +70,13 @@ class VirtualScroller extends React.PureComponent {
     );
     /* eslint-enable no-shadow */
 
+    this._handleRefUpdate = this._handleRefUpdate.bind(this);
     this._handlePositioningUpdate = this._handlePositioningUpdate.bind(this);
     this._createScrollTracker(props.nearStartProximityRatio, props.nearEndProximityRatio);
+  }
+
+  _handleRefUpdate(ref) {
+    this._updater = ref;
   }
 
   _handlePositioningUpdate(position) {
@@ -109,6 +114,13 @@ class VirtualScroller extends React.PureComponent {
     ]);
   }
 
+  // only can scroll to knwon height item
+  scrollToIndex(index) {
+    if (this._updater) {
+      this._updater.scrollToIndex(index);
+    }
+  }
+
   componentWillReceiveProps(nextProps) {
     this._createScrollTracker(nextProps.nearStartProximityRatio, nextProps.nearEndProximityRatio);
   }
@@ -118,6 +130,7 @@ class VirtualScroller extends React.PureComponent {
 
     return (
       <Updater
+        ref={this._handleRefUpdate}
         list={this._getList()}
         renderItem={renderItem}
         assumedItemHeight={assumedItemHeight}

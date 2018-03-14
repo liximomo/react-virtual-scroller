@@ -38,8 +38,12 @@ class Viewport {
     return this.getRect().translateBy(0, Math.ceil(scrollerTop - top));
   }
 
+  getOffsetTop() {
+    return this._offsetTop;
+  }
+
   setOffsetTop(value) {
-    this._offsetTop = value;
+    this._offsetTop = Math.ceil(value);
   }
 
   getRect() {
@@ -74,6 +78,16 @@ class Viewport {
     }
 
     this._programticScrollListeners.forEach(listener => listener(vertically));
+  }
+
+  scrollTo(yPos) {
+    if (this._useWindow) {
+      this._window.scrollTo(0, yPos);
+    } else {
+      this._scroller.scrollTop = yPos;
+    }
+
+    this._programticScrollListeners.forEach(listener => listener(yPos));
   }
 
   addRectChangeListener(listener) {

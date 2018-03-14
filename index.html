@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>preview</title>
     <style>
-      html, body {
+      html,
+      body {
         margin: 0;
         padding: 0;
       }
@@ -31,14 +33,16 @@
         padding-bottom: calc(100% / (var(--aspect-ratio)));
       }
 
-      [style*="--aspect-ratio"] > :first-child {
+      [style*="--aspect-ratio"]> :first-child {
         position: absolute;
         top: 0;
         left: 0;
         height: 100%;
       }
+
     </style>
   </head>
+
   <body>
     <div id="app"></div>
     <script src="https://unpkg.com/babel-standalone@6.26.0/babel.min.js"></script>
@@ -110,6 +114,7 @@
                 {
                   wrapperNode ? (
                     <VirtualScrollerComponent
+                      ref={ref => window.vscroll = ref}
                       items={this.state.datas}
                       renderItem={this.renderItem}
                       viewport={this.getViewport()}
@@ -128,4 +133,5 @@
       );
     </script>
   </body>
+
 </html>

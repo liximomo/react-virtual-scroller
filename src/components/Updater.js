@@ -9,6 +9,7 @@ import findNewSlice from '../utlis/findNewSlice';
 import Position from '../modules/Position';
 import Rectangle from '../modules/Rectangle';
 import Viewport from '../modules/Viewport';
+import requestAnimationFrame from '../modules/requestAnimationFrame';
 
 function findAnchor(prevPos, nextPos) {
   const viewportRect = prevPos.getViewportRect();
@@ -144,10 +145,10 @@ class Updater extends React.PureComponent {
     this._update = this._update.bind(this);
     this._notifyPositioning = this._notifyPositioning.bind(this);
 
-    this._scheduleUpdate = createScheduler(this._update, window.requestAnimationFrame);
+    this._scheduleUpdate = createScheduler(this._update, requestAnimationFrame);
     this._schedulePositioningNotification = createScheduler(
       this._notifyPositioning,
-      window.requestAnimationFrame
+      requestAnimationFrame
     );
     this._handleScroll = throttle(this._scheduleUpdate, 100, { trailing: true });
   }
@@ -297,6 +298,13 @@ class Updater extends React.PureComponent {
     if (!this._unmounted && this.props.onPositioningUpdate) {
       this.props.onPositioningUpdate(this.getPositioning());
     }
+  }
+
+  scrollToIndex(index) {
+    const { list, viewport } = this.props;
+    const targetItem = list[index];
+    const rects = this._getRectangles();
+    viewport.scrollTo(rects[targetItem.id].getTop() + viewport.getOffsetTop());
   }
 
   getPositioning() {
