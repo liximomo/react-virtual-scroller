@@ -6,6 +6,10 @@
   "module": "es/index.js",
   "browser": "dist/react-virtual-scroller.umd.js",
   "author": "liximomo <liximomo@gmail.com> (https://liximomo.github.io/)",
+  "repository": {
+    "url": "git@github.com:liximomo/react-virtual-scroller.git",
+    "type": "git"
+  },
   "license": "MIT",
   "files": [
     "dist",
