@@ -3,4 +3,4 @@ import Viewport from './modules/Viewport';
 
 export default VirtualScroller;
 
-export { Viewport };
+export { VirtualScroller, Viewport };

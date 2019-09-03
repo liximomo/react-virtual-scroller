@@ -78,7 +78,9 @@ function offsetCorrection(prevPos, nextPos) {
   const offsetToViewport =
     prevPos.getItemRect(anchorId).getTop() - prevPos.getViewportRect().getTop();
   return (
-    nextPos.getItemRect(anchorId).getTop() - nextPos.getViewportRect().getTop() - offsetToViewport
+    nextPos.getItemRect(anchorId).getTop() -
+    nextPos.getViewportRect().getTop() -
+    offsetToViewport
   );
 }
 
@@ -138,7 +140,7 @@ class Updater extends React.PureComponent {
     );
     /* eslint-enable no-shadow */
 
-    // $todo add initItemIndex props
+    // TODO: add initItemIndex props
     this.state = this._getDefaultSlice(props.list);
 
     this._handleRefUpdate = this._handleRefUpdate.bind(this);
@@ -150,7 +152,9 @@ class Updater extends React.PureComponent {
       this._notifyPositioning,
       requestAnimationFrame
     );
-    this._handleScroll = throttle(this._scheduleUpdate, 100, { trailing: true });
+    this._handleScroll = throttle(this._scheduleUpdate, 100, {
+      trailing: true,
+    });
   }
 
   _handleRefUpdate(ref) {
@@ -193,7 +197,10 @@ class Updater extends React.PureComponent {
       this._onHeightsUpdate(this._prevPositioning, this.getPositioning());
     }
 
-    if (hasListChanged || Math.abs(heightState.heightDelta) >= this.props.assumedItemHeight) {
+    if (
+      hasListChanged ||
+      Math.abs(heightState.heightDelta) >= this.props.assumedItemHeight
+    ) {
       this._scheduleUpdate();
     }
     this._schedulePositioningNotification();
@@ -237,11 +244,14 @@ class Updater extends React.PureComponent {
     const lastIndex = list.length - 1;
     return {
       blankSpaceAbove:
-        list.length <= 0 ? 0 : rects[list[sliceStart].id].getTop() - rects[list[0].id].getTop(),
+        list.length <= 0
+          ? 0
+          : rects[list[sliceStart].id].getTop() - rects[list[0].id].getTop(),
       blankSpaceBelow:
         sliceEnd >= list.length
           ? 0
-          : rects[list[lastIndex].id].getBottom() - rects[list[sliceEnd].id].getTop(),
+          : rects[list[lastIndex].id].getBottom() -
+            rects[list[sliceEnd].id].getTop(),
     };
   }
 
@@ -263,18 +273,26 @@ class Updater extends React.PureComponent {
     }
 
     const viewportRect = this._getRelativeViewportRect();
-    const offscreenHeight = viewportRect.getHeight() * this.props.offscreenToViewportRatio;
+    const offscreenHeight =
+      viewportRect.getHeight() * this.props.offscreenToViewportRatio;
     const renderRectTop = viewportRect.getTop() - offscreenHeight;
     const renderRectBottom = viewportRect.getBottom() + offscreenHeight;
 
     const rects = this._getRectangles();
 
-    let startIndex = findIndex(list, item => rects[item.id].getBottom() > renderRectTop);
+    let startIndex = findIndex(
+      list,
+      item => rects[item.id].getBottom() > renderRectTop
+    );
     if (startIndex < 0) {
       startIndex = list.length - 1;
     }
 
-    let endIndex = findIndex(list, item => rects[item.id].getTop() >= renderRectBottom, startIndex);
+    let endIndex = findIndex(
+      list,
+      item => rects[item.id].getTop() >= renderRectBottom,
+      startIndex
+    );
     if (endIndex < 0) {
       endIndex = list.length;
     }
@@ -319,7 +337,9 @@ class Updater extends React.PureComponent {
   }
 
   componentDidMount() {
-    this._unlistenScroll = this.props.viewport.addScrollListener(this._handleScroll);
+    this._unlistenScroll = this.props.viewport.addScrollListener(
+      this._handleScroll
+    );
     this._postRenderProcessing(true);
   }
 
@@ -329,8 +349,12 @@ class Updater extends React.PureComponent {
     const nextList = nextProps.list;
     if (prevList !== nextList) {
       const slice =
-        findNewSlice(prevList, nextList, prevState.sliceStart, prevState.sliceEnd) ||
-        this._getDefaultSlice(nextList);
+        findNewSlice(
+          prevList,
+          nextList,
+          prevState.sliceStart,
+          prevState.sliceEnd
+        ) || this._getDefaultSlice(nextList);
       this._setSlice(slice.sliceStart, slice.sliceEnd);
     }
   }

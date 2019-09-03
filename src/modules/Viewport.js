@@ -14,7 +14,7 @@ class Viewport {
       return Math.ceil(this._window.document.documentElement.clientHeight);
     }
 
-    return this._scroller.clientHeight;
+    return Math.ceil(this._scroller.clientHeight);
   }
 
   _addListener(event, listener, useWindow) {
@@ -33,8 +33,11 @@ class Viewport {
 
   getRectRelativeTo(node) {
     const top = node.getBoundingClientRect().top;
-    const scrollerTop = this._useWindow ? 0 : this._scroller.getBoundingClientRect().top;
+    const scrollerTop = this._useWindow
+      ? 0
+      : this._scroller.getBoundingClientRect().top;
 
+    // calculate the rect coordinate based on "node"
     return this.getRect().translateBy(0, Math.ceil(scrollerTop - top));
   }
 

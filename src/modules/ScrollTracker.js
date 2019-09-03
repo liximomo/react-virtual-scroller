@@ -36,16 +36,28 @@ function findCause(prevState, nextState) {
 }
 
 const Condition = {
+  /**
+   * distance to top in px
+   * @param {number} distance
+   */
   nearTop(distance) {
     return (list, viewport) => {
       return viewport.getTop() - list.getTop() <= distance;
     };
   },
+  /**
+   * distance to bottom in px
+   * @param {number} distance
+   */
   nearBottom(distance) {
     return (list, viewport) => {
       return list.getBottom() - viewport.getBottom() <= distance;
     };
   },
+  /**
+   * ratio of viewport
+   * @param {number} ratio
+   */
   nearTopRatio(ratio) {
     return (list, viewport) => {
       const viewportHeight = viewport.getHeight();
@@ -53,6 +65,10 @@ const Condition = {
       return viewport.getTop() - list.getTop() <= distance;
     };
   },
+  /**
+   * ratio of viewport
+   * @param {number} distance
+   */
   nearBottomRatio(ratio) {
     return (list, viewport) => {
       const viewportHeight = viewport.getHeight();

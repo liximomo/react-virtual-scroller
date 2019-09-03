@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
-
   <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no"
+    />
     <title>preview</title>
     <style>
       html,
@@ -12,45 +14,51 @@
         padding: 0;
       }
 
-      .head {
-        height: 100px;
-      }
-
       .list {
         overflow-x: hidden;
         overflow-y: scroll;
         -webkit-overflow-scrolling: touch;
         height: 600px;
+        background: #ddd;
       }
 
-      [style*="--aspect-ratio"] {
+      .head {
+        height: 100px;
+        background: cyan;
+      }
+
+      [style*='--aspect-ratio'] {
         position: relative;
       }
 
-      [style*="--aspect-ratio"]::before {
-        content: "";
+      [style*='--aspect-ratio']::before {
+        content: '';
         display: block;
         padding-bottom: calc(100% / (var(--aspect-ratio)));
       }
 
-      [style*="--aspect-ratio"]> :first-child {
+      [style*='--aspect-ratio'] > :first-child {
         position: absolute;
         top: 0;
         left: 0;
         height: 100%;
       }
-
     </style>
   </head>
 
   <body>
     <div id="app"></div>
     <script src="https://unpkg.com/babel-standalone@6.26.0/babel.min.js"></script>
-    <script type="text/javascript" src="https://unpkg.com/react@16.2.0/umd/react.development.js"></script>
-    <script type="text/javascript" src="https://unpkg.com/react-dom@16.2.0/umd/react-dom.development.js"></script>
+    <script
+      type="text/javascript"
+      src="https://unpkg.com/react@16.9.0/umd/react.development.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="https://unpkg.com/react-dom@16.9.0/umd/react-dom.development.js"
+    ></script>
     <script src="./dist/react-virtual-scroller.umd.js"></script>
     <script type="text/babel">
-
       const Viewport = VirtualScroller.Viewport;
       const VirtualScrollerComponent = VirtualScroller.default;
 
@@ -73,15 +81,13 @@
           this.receiveRef = this.receiveRef.bind(this);
         }
 
-        renderItem = (item) => (
+        renderItem = item => (
           <div
             style={{ height: item.height }}
             className="item"
             style={{ '--aspect-ratio': 300 / item.height }}
           >
-            <div>
-              {item.id}
-            </div>
+            <div>{item.id}</div>
           </div>
         );
 
@@ -90,9 +96,7 @@
         }
 
         getViewport() {
-          const {
-            wrapperNode
-          } = this.state;
+          const { wrapperNode } = this.state;
 
           if (!this._viewport) {
             this._viewport = new Viewport(window, wrapperNode);
@@ -103,35 +107,27 @@
         }
 
         render() {
-          const {
-            wrapperNode
-          } = this.state;
+          const { wrapperNode } = this.state;
 
           return (
             <div>
               <div className="list" ref={this.receiveRef}>
                 <div className="head">head</div>
-                {
-                  wrapperNode ? (
-                    <VirtualScrollerComponent
-                      ref={ref => window.vscroll = ref}
-                      items={this.state.datas}
-                      renderItem={this.renderItem}
-                      viewport={this.getViewport()}
-                    />
-                  ) : null
-                }
+                {wrapperNode ? (
+                  <VirtualScrollerComponent
+                    ref={ref => (window.vscroll = ref)}
+                    items={this.state.datas}
+                    renderItem={this.renderItem}
+                    viewport={this.getViewport()}
+                  />
+                ) : null}
               </div>
             </div>
           );
         }
       }
 
-      ReactDOM.render(
-        <App />,
-        document.getElementById('app')
-      );
+      ReactDOM.render(<App />, document.getElementById('app'));
     </script>
   </body>
-
 </html>

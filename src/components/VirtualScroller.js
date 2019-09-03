@@ -40,7 +40,6 @@ class VirtualScroller extends React.PureComponent {
   constructor(props) {
     super(props);
 
-    /* eslint-disable no-shadow */
     this._getList = recomputed(
       this,
       props => props.items,
@@ -68,11 +67,34 @@ class VirtualScroller extends React.PureComponent {
         return resultList;
       }
     );
-    /* eslint-enable no-shadow */
+    this._getScrollTracker = recomputed(
+      this,
+      props => props.nearStartProximityRatio,
+      props => props.nearEndProximityRatio,
+      (nearStartProximityRatio, nearEndProximityRatio) => {
+        return new ScrollTracker([
+          {
+            condition: Condition.nearTop(5),
+            callback: info => this.props.onAtStart(info),
+          },
+          {
+            condition: Condition.nearTopRatio(nearStartProximityRatio),
+            callback: info => this.props.onNearStart(info),
+          },
+          {
+            condition: Condition.nearBottomRatio(nearEndProximityRatio),
+            callback: info => this.props.onNearEnd(info),
+          },
+          {
+            condition: Condition.nearBottom(5),
+            callback: info => this.props.onAtEnd(info),
+          },
+        ]);
+      }
+    );
 
     this._handleRefUpdate = this._handleRefUpdate.bind(this);
     this._handlePositioningUpdate = this._handlePositioningUpdate.bind(this);
-    this._createScrollTracker(props.nearStartProximityRatio, props.nearEndProximityRatio);
   }
 
   _handleRefUpdate(ref) {
@@ -80,49 +102,14 @@ class VirtualScroller extends React.PureComponent {
   }
 
   _handlePositioningUpdate(position) {
-    if (this._scrollTracker) {
-      this._scrollTracker.handlePositioningUpdate(position);
-    }
+    this._getScrollTracker().handlePositioningUpdate(position);
   }
 
-  _createScrollTracker(nearStartProximityRatio, nearEndProximityRatio) {
-    this._scrollTracker = new ScrollTracker([
-      {
-        condition: Condition.nearTop(5),
-        callback: info => {
-          return this.props.onAtStart(info);
-        },
-      },
-      {
-        condition: Condition.nearTopRatio(nearStartProximityRatio),
-        callback: info => {
-          return this.props.onNearStart(info);
-        },
-      },
-      {
-        condition: Condition.nearBottomRatio(nearEndProximityRatio),
-        callback: info => {
-          return this.props.onNearEnd(info);
-        },
-      },
-      {
-        condition: Condition.nearBottom(5),
-        callback: info => {
-          return this.props.onAtEnd(info);
-        },
-      },
-    ]);
-  }
-
-  // only can scroll to knwon height item
+  // only can scroll to item that has a knwon height
   scrollToIndex(index) {
     if (this._updater) {
       this._updater.scrollToIndex(index);
     }
-  }
-
-  componentWillReceiveProps(nextProps) {
-    this._createScrollTracker(nextProps.nearStartProximityRatio, nextProps.nearEndProximityRatio);
   }
 
   render() {
